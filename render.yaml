@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: pregasquad-menu
+    env: static
+    buildCommand: npm install -g pnpm && pnpm install && BASE_PATH=/ pnpm --filter @workspace/pregasquad-menu run build
+    staticPublishPath: ./artifacts/pregasquad-menu/dist/public
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
