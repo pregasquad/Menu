@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import { slides } from "@/slideLoader";
@@ -14,6 +14,19 @@ function SlideEditor() {
   const location = useLocation();
   const navigate = useNavigate();
   const currentIndex = getSlideIndex(location.pathname);
+  const [hovered, setHovered] = useState<"left" | "right" | null>(null);
+
+  const goNext = () => {
+    if (currentIndex < slides.length - 1) {
+      navigate(`/slide${slides[currentIndex + 1].position}`);
+    }
+  };
+
+  const goPrev = () => {
+    if (currentIndex > 0) {
+      navigate(`/slide${slides[currentIndex - 1].position}`);
+    }
+  };
 
   useEffect(() => {
     if (currentIndex === -1) return;
@@ -33,26 +46,17 @@ function SlideEditor() {
       }
     };
 
-    const onClick = (event: MouseEvent) => {
-      if (event.button !== 0 || event.metaKey || event.ctrlKey) return;
-      const fraction = event.clientX / window.innerWidth;
-      if (fraction < 0.4 && currentIndex > 0) {
-        navigate(`/slide${slides[currentIndex - 1].position}`);
-      } else if (fraction >= 0.4 && currentIndex < slides.length - 1) {
-        navigate(`/slide${slides[currentIndex + 1].position}`);
-      }
-    };
-
     window.addEventListener("keydown", onKeyDown);
-    window.addEventListener("click", onClick);
     return () => {
       window.removeEventListener("keydown", onKeyDown);
-      window.removeEventListener("click", onClick);
     };
   }, [currentIndex, navigate]);
 
+  const canGoPrev = currentIndex > 0;
+  const canGoNext = currentIndex < slides.length - 1;
+
   return (
-    <>
+    <div style={{ position: "relative", width: "100vw", height: "100vh", overflow: "hidden" }}>
       {slides.map((slide, index) => (
         <div
           key={slide.id}
@@ -61,7 +65,140 @@ function SlideEditor() {
           <slide.Component />
         </div>
       ))}
-    </>
+
+      {canGoPrev && (
+        <button
+          onClick={(e) => { e.stopPropagation(); goPrev(); }}
+          onMouseEnter={() => setHovered("left")}
+          onMouseLeave={() => setHovered(null)}
+          style={{
+            position: "absolute",
+            left: 0,
+            top: 0,
+            height: "100%",
+            width: "12vw",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "1vh",
+            background: hovered === "left"
+              ? "linear-gradient(to right, rgba(233,30,140,0.18), transparent)"
+              : "linear-gradient(to right, rgba(0,0,0,0.25), transparent)",
+            border: "none",
+            cursor: "pointer",
+            transition: "background 0.3s ease",
+            zIndex: 50,
+          }}
+        >
+          <div style={{
+            width: "4vw",
+            height: "4vw",
+            borderRadius: "50%",
+            background: hovered === "left" ? "rgba(233,30,140,0.9)" : "rgba(255,255,255,0.12)",
+            border: "2px solid " + (hovered === "left" ? "#E91E8C" : "rgba(255,255,255,0.3)"),
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            transition: "all 0.3s ease",
+            backdropFilter: "blur(4px)",
+          }}>
+            <svg width="40%" height="40%" viewBox="0 0 24 24" fill="none">
+              <path d="M15 18l-6-6 6-6" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
+          <span style={{
+            fontFamily: "Montserrat, sans-serif",
+            fontSize: "1vw",
+            fontWeight: 500,
+            color: hovered === "left" ? "#E91E8C" : "rgba(255,255,255,0.5)",
+            letterSpacing: "0.1em",
+            textTransform: "uppercase",
+            transition: "color 0.3s ease",
+          }}>
+            Précédent
+          </span>
+        </button>
+      )}
+
+      {canGoNext && (
+        <button
+          onClick={(e) => { e.stopPropagation(); goNext(); }}
+          onMouseEnter={() => setHovered("right")}
+          onMouseLeave={() => setHovered(null)}
+          style={{
+            position: "absolute",
+            right: 0,
+            top: 0,
+            height: "100%",
+            width: "12vw",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "1vh",
+            background: hovered === "right"
+              ? "linear-gradient(to left, rgba(233,30,140,0.18), transparent)"
+              : "linear-gradient(to left, rgba(0,0,0,0.25), transparent)",
+            border: "none",
+            cursor: "pointer",
+            transition: "background 0.3s ease",
+            zIndex: 50,
+          }}
+        >
+          <div style={{
+            width: "4vw",
+            height: "4vw",
+            borderRadius: "50%",
+            background: hovered === "right" ? "rgba(233,30,140,0.9)" : "rgba(255,255,255,0.12)",
+            border: "2px solid " + (hovered === "right" ? "#E91E8C" : "rgba(255,255,255,0.3)"),
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            transition: "all 0.3s ease",
+            backdropFilter: "blur(4px)",
+          }}>
+            <svg width="40%" height="40%" viewBox="0 0 24 24" fill="none">
+              <path d="M9 18l6-6-6-6" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
+          <span style={{
+            fontFamily: "Montserrat, sans-serif",
+            fontSize: "1vw",
+            fontWeight: 500,
+            color: hovered === "right" ? "#E91E8C" : "rgba(255,255,255,0.5)",
+            letterSpacing: "0.1em",
+            textTransform: "uppercase",
+            transition: "color 0.3s ease",
+          }}>
+            Suivant
+          </span>
+        </button>
+      )}
+
+      <div style={{
+        position: "absolute",
+        bottom: "2.5vh",
+        left: "50%",
+        transform: "translateX(-50%)",
+        display: "flex",
+        gap: "0.7vw",
+        zIndex: 50,
+      }}>
+        {slides.map((_, i) => (
+          <div
+            key={i}
+            style={{
+              width: i === currentIndex ? "2.2vw" : "0.7vw",
+              height: "0.7vw",
+              borderRadius: "1vw",
+              background: i === currentIndex ? "#E91E8C" : "rgba(255,255,255,0.25)",
+              transition: "all 0.3s ease",
+            }}
+          />
+        ))}
+      </div>
+    </div>
   );
 }
 
